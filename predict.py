@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 
 import numpy as np
 import torch
@@ -23,7 +22,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ckpt", type=str, required=True, help="Path to best.pt")
     parser.add_argument("--out", type=str, default="pred.npz", help="Output npz path")
     parser.add_argument("--device", type=str, default="cuda")
-    parser.add_argument("--amp", action="store_true", help="Use mixed precision for inference")
+    parser.add_argument(
+        "--amp", action="store_true", help="Use mixed precision for inference"
+    )
     parser.add_argument(
         "--tile-size",
         type=int,
@@ -82,7 +83,9 @@ def main() -> None:
     args = parse_args()
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
     if args.tile_size > 0:
-        print(f"Using tiled inference: tile_size={args.tile_size}, overlap={args.tile_overlap}")
+        print(
+            f"Using tiled inference: tile_size={args.tile_size}, overlap={args.tile_overlap}"
+        )
 
     dataset_root = resolve_dataset_root(args.data_root)
     print(f"Using dataset root: {dataset_root}")
@@ -98,7 +101,9 @@ def main() -> None:
     with torch.no_grad():
         for img, name in tqdm(loader, desc="Predict", ncols=100):
             img = img.to(device, non_blocking=True)
-            pred = _forward_tiled(model, img, args.tile_size, args.tile_overlap, args.amp)
+            pred = _forward_tiled(
+                model, img, args.tile_size, args.tile_overlap, args.amp
+            )
             pred_u8 = (pred * 255.0).round().to(torch.uint8)
 
             # Required format: (3, H, W) uint8

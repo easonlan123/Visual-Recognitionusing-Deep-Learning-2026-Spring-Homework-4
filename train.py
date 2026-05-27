@@ -17,7 +17,13 @@ from dataset import (
     resolve_dataset_root,
 )
 from model_promptir import PromptIRNet
-from utils import calculate_psnr, count_parameters, cosine_lr, ensure_dir, seed_everything
+from utils import (
+    calculate_psnr,
+    count_parameters,
+    cosine_lr,
+    ensure_dir,
+    seed_everything,
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -78,7 +84,9 @@ def evaluate(
             deg = deg.to(device, non_blocking=True)
             clean = clean.to(device, non_blocking=True)
 
-            with torch.amp.autocast("cuda", enabled=(use_amp and device.type == "cuda")):
+            with torch.amp.autocast(
+                "cuda", enabled=(use_amp and device.type == "cuda")
+            ):
                 pred = model(deg)
             loss = l1(pred, clean)
             psnr = calculate_psnr(pred, clean)
@@ -109,7 +117,9 @@ def main() -> None:
     print(f"Train pairs: {len(train_pairs)} | Val pairs: {len(val_pairs)}")
 
     train_ds = RestorationTrainDataset(train_pairs, patch_size=args.patch_size)
-    val_patch_size = args.patch_size if args.val_patch_size == 0 else args.val_patch_size
+    val_patch_size = (
+        args.patch_size if args.val_patch_size == 0 else args.val_patch_size
+    )
     val_ds = None
     if len(val_pairs) > 0:
         val_ds = RestorationValDataset(
@@ -137,7 +147,9 @@ def main() -> None:
     model = PromptIRNet().to(device)
     print(f"Model params: {count_parameters(model) / 1e6:.2f}M")
 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    optimizer = torch.optim.AdamW(
+        model.parameters(), lr=args.lr, weight_decay=args.weight_decay
+    )
     scaler = torch.amp.GradScaler("cuda", enabled=(args.amp and device.type == "cuda"))
 
     l1 = nn.L1Loss(reduction="mean")
@@ -154,7 +166,9 @@ def main() -> None:
 
         resume_data = torch.load(resume_path, map_location=device)
         if not isinstance(resume_data, dict) or "model" not in resume_data:
-            raise RuntimeError("--resume-ckpt must be a checkpoint dict containing key 'model'")
+            raise RuntimeError(
+                "--resume-ckpt must be a checkpoint dict containing key 'model'"
+            )
 
         model.load_state_dict(resume_data["model"], strict=True)
         if "optimizer" in resume_data:
@@ -193,7 +207,9 @@ def main() -> None:
         model.train()
         running_loss = 0.0
 
-        pbar = tqdm(train_loader, desc=f"Epoch {epoch}/{start_epoch + args.epochs}", ncols=110)
+        pbar = tqdm(
+            train_loader, desc=f"Epoch {epoch}/{start_epoch + args.epochs}", ncols=110
+        )
         for deg, clean in pbar:
             deg = deg.to(device, non_blocking=True)
             clean = clean.to(device, non_blocking=True)
@@ -203,7 +219,9 @@ def main() -> None:
                 g["lr"] = lr_now
 
             optimizer.zero_grad(set_to_none=True)
-            with torch.amp.autocast("cuda", enabled=(args.amp and device.type == "cuda")):
+            with torch.amp.autocast(
+                "cuda", enabled=(args.amp and device.type == "cuda")
+            ):
                 pred = model(deg)
                 loss = l1(pred, clean)
 
@@ -266,12 +284,12 @@ def main() -> None:
         if val_loader is not None:
             print(
                 f"Epoch {epoch:03d} | train_l1={train_loss:.4f} | val_l1={val_loss:.4f} | "
-                f"val_psnr={val_psnr:.2f} | best_psnr={best_psnr:.2f} | {save_note} | time={elapsed/60:.1f}m"
+                f"val_psnr={val_psnr:.2f} | best_psnr={best_psnr:.2f} | {save_note} | time={elapsed / 60:.1f}m"
             )
         else:
             print(
                 f"Epoch {epoch:03d} | train_l1={train_loss:.4f} | "
-                f"best_train_l1={best_train_l1:.4f} | {save_note} | time={elapsed/60:.1f}m"
+                f"best_train_l1={best_train_l1:.4f} | {save_note} | time={elapsed / 60:.1f}m"
             )
 
     print("Training finished.")

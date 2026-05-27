@@ -42,7 +42,9 @@ class RestorationTrainDataset(Dataset):
         img = Image.open(path).convert("RGB")
         return np.array(img, dtype=np.uint8)
 
-    def _random_crop(self, deg: np.ndarray, clean: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    def _random_crop(
+        self, deg: np.ndarray, clean: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray]:
         h, w, _ = deg.shape
         ps = self.patch_size
         if h < ps or w < ps:
@@ -54,9 +56,13 @@ class RestorationTrainDataset(Dataset):
 
         top = random.randint(0, h - ps)
         left = random.randint(0, w - ps)
-        return deg[top : top + ps, left : left + ps], clean[top : top + ps, left : left + ps]
+        return deg[top : top + ps, left : left + ps], clean[
+            top : top + ps, left : left + ps
+        ]
 
-    def _augment(self, deg: np.ndarray, clean: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    def _augment(
+        self, deg: np.ndarray, clean: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray]:
         if random.random() < self.hflip_prob:
             deg = np.fliplr(deg)
             clean = np.fliplr(clean)
@@ -112,7 +118,9 @@ class RestorationValDataset(Dataset):
 
         top = max(0, (h - ps) // 2)
         left = max(0, (w - ps) // 2)
-        return deg[top : top + ps, left : left + ps], clean[top : top + ps, left : left + ps]
+        return deg[top : top + ps, left : left + ps], clean[
+            top : top + ps, left : left + ps
+        ]
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         item = self.pairs[idx]
@@ -128,7 +136,9 @@ class RestorationTestDataset(Dataset):
     def __init__(self, degraded_dir: str | Path) -> None:
         self.degraded_dir = Path(degraded_dir)
         files = [
-            p for p in self.degraded_dir.iterdir() if p.is_file() and p.suffix.lower() in IMG_EXTS
+            p
+            for p in self.degraded_dir.iterdir()
+            if p.is_file() and p.suffix.lower() in IMG_EXTS
         ]
 
         # Test files are expected to be 0.png ... 99.png; sort numerically if possible.
@@ -167,9 +177,11 @@ def resolve_dataset_root(root: str | Path = ".") -> Path:
             candidates.append(child)
 
     for c in candidates:
-        if (c / "train" / "degraded").exists() and (c / "train" / "clean").exists() and (
-            c / "test" / "degraded"
-        ).exists():
+        if (
+            (c / "train" / "degraded").exists()
+            and (c / "train" / "clean").exists()
+            and (c / "test" / "degraded").exists()
+        ):
             return c
 
     raise RuntimeError(

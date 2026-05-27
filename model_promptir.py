@@ -24,7 +24,9 @@ class GatedDWFFN(nn.Module):
         super().__init__()
         hidden = int(dim * expansion)
         self.pw1 = nn.Conv2d(dim, hidden * 2, kernel_size=1)
-        self.dw = nn.Conv2d(hidden * 2, hidden * 2, kernel_size=3, padding=1, groups=hidden * 2)
+        self.dw = nn.Conv2d(
+            hidden * 2, hidden * 2, kernel_size=3, padding=1, groups=hidden * 2
+        )
         self.pw2 = nn.Conv2d(hidden, dim, kernel_size=1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -44,7 +46,9 @@ class MDTA(nn.Module):
         self.temperature = nn.Parameter(torch.ones(num_heads, 1, 1))
 
         self.qkv = nn.Conv2d(dim, dim * 3, kernel_size=1)
-        self.qkv_dw = nn.Conv2d(dim * 3, dim * 3, kernel_size=3, padding=1, groups=dim * 3)
+        self.qkv_dw = nn.Conv2d(
+            dim * 3, dim * 3, kernel_size=3, padding=1, groups=dim * 3
+        )
         self.proj = nn.Conv2d(dim, dim, kernel_size=1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -150,24 +154,38 @@ class PromptIRNet(nn.Module):
         super().__init__()
         self.embed = nn.Conv2d(in_ch, dim, kernel_size=3, padding=1)
 
-        self.enc1 = nn.Sequential(*[TransformerBlock(dim, heads[0]) for _ in range(blocks[0])])
+        self.enc1 = nn.Sequential(
+            *[TransformerBlock(dim, heads[0]) for _ in range(blocks[0])]
+        )
         self.down1 = Downsample(dim, dim * 2)
 
-        self.enc2 = nn.Sequential(*[TransformerBlock(dim * 2, heads[1]) for _ in range(blocks[1])])
+        self.enc2 = nn.Sequential(
+            *[TransformerBlock(dim * 2, heads[1]) for _ in range(blocks[1])]
+        )
         self.down2 = Downsample(dim * 2, dim * 4)
 
-        self.latent = nn.Sequential(*[TransformerBlock(dim * 4, heads[2]) for _ in range(blocks[2])])
+        self.latent = nn.Sequential(
+            *[TransformerBlock(dim * 4, heads[2]) for _ in range(blocks[2])]
+        )
 
         self.up1 = Upsample(dim * 4, dim * 2)
         self.fuse1 = nn.Conv2d(dim * 4, dim * 2, kernel_size=1)
-        self.dec1 = nn.Sequential(*[TransformerBlock(dim * 2, heads[3]) for _ in range(blocks[3])])
+        self.dec1 = nn.Sequential(
+            *[TransformerBlock(dim * 2, heads[3]) for _ in range(blocks[3])]
+        )
 
         self.up2 = Upsample(dim * 2, dim)
         self.fuse2 = nn.Conv2d(dim * 2, dim, kernel_size=1)
-        self.dec2 = nn.Sequential(*[TransformerBlock(dim, heads[0]) for _ in range(blocks[0])])
+        self.dec2 = nn.Sequential(
+            *[TransformerBlock(dim, heads[0]) for _ in range(blocks[0])]
+        )
 
-        self.prompt1 = PromptGenerator(dim * 2, prompt_dim=prompt_dim, num_prompts=num_prompts)
-        self.prompt2 = PromptGenerator(dim, prompt_dim=prompt_dim, num_prompts=num_prompts)
+        self.prompt1 = PromptGenerator(
+            dim * 2, prompt_dim=prompt_dim, num_prompts=num_prompts
+        )
+        self.prompt2 = PromptGenerator(
+            dim, prompt_dim=prompt_dim, num_prompts=num_prompts
+        )
 
         self.out = nn.Conv2d(dim, out_ch, kernel_size=3, padding=1)
 
